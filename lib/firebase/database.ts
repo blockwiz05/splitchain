@@ -326,4 +326,29 @@ export const firebaseService = {
             throw error;
         }
     },
+
+    /**
+     * Add settlement to group
+     */
+    async addSettlement(sessionId: string, settlement: any): Promise<void> {
+        try {
+            const group = await this.getGroup(sessionId);
+            if (!group) {
+                console.warn('Group not found:', sessionId);
+                return;
+            }
+
+            // Initialize settlements array if it doesn't exist
+            if (!group.settlements) {
+                (group as any).settlements = [];
+            }
+
+            (group as any).settlements.push(settlement);
+            await this.saveGroup(group);
+            console.log('💰 Added settlement to Firebase:', settlement.id);
+        } catch (error) {
+            console.error('Error adding settlement:', error);
+            throw error;
+        }
+    },
 };

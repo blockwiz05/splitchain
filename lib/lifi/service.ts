@@ -7,7 +7,7 @@
  * Documentation: https://docs.li.fi
  */
 
-import { createConfig, executeRoute, getRoutes } from '@lifi/sdk';
+import { createConfig, EVM, executeRoute, getRoutes } from '@lifi/sdk';
 
 interface LifiConfig {
     apiKey?: string;
@@ -36,21 +36,63 @@ interface RouteQuote {
 
 class LifiService {
     private config: LifiConfig;
+    private initialized: boolean = false;
 
     constructor(config: LifiConfig) {
         this.config = config;
+        // Don't initialize during SSR - will initialize on first use
+    }
 
-        // Initialize LI.FI SDK
-        createConfig({
-            apiKey: config.apiKey,
-            integrator: 'SplitChain',
-        });
+    /**
+     * Initialize LI.FI SDK (client-side only)
+     */
+    private ensureInitialized(walletClient?: any) {
+        // Only initialize on client-side
+        if (typeof window === 'undefined') {
+            return; // Skip during SSR
+        }
+
+        // Re-initialize when a wallet client is provided (needed for execution)
+        if (!this.initialized || walletClient) {
+            try {
+                const providers = walletClient
+                    ? [
+                        EVM({
+                            getWalletClient: async () => walletClient,
+                            switchChain: async (chainId: number) => {
+                                await walletClient.switchChain({ id: chainId });
+                                return walletClient;
+                            },
+                        }),
+                    ]
+                    : [];
+
+                createConfig({
+                    apiKey: this.config.apiKey,
+                    integrator: 'SplitChain',
+                    providers,
+                });
+                this.initialized = true;
+                console.log('✅ LI.FI SDK initialized', walletClient ? 'with wallet provider' : '');
+            } catch (error) {
+                console.warn('⚠️ LI.FI SDK initialization failed:', error);
+            }
+        }
     }
 
     /**
      * Get cross-chain routes for settlement
      */
     async getSettlementRoutes(request: RouteRequest): Promise<RouteQuote[]> {
+        // Ensure initialized on client-side
+        this.ensureInitialized();
+
+        // Skip during SSR
+        if (typeof window === 'undefined') {
+            console.warn('⚠️ LI.FI called during SSR, skipping');
+            return [];
+        }
+
         try {
             const routes = await getRoutes({
                 fromChainId: request.fromChain,
@@ -89,19 +131,28 @@ class LifiService {
      */
     async executeSettlement(
         route: any,
-        signer: any,
+        walletClient: any,
         onUpdate?: (update: any) => void
     ): Promise<string> {
+        // Re-initialize with the wallet client so SDK has an EVM execution provider
+        this.ensureInitialized(walletClient);
+
         try {
-            const execution = await executeRoute(route, {
-                signer,
-                updateCallback: onUpdate,
+            const executedRoute = await executeRoute(route, {
+                updateRouteHook: onUpdate ? (updatedRoute) => { onUpdate(updatedRoute); return updatedRoute; } : undefined,
             });
 
-            // Wait for completion
-            await execution.wait();
+            // executeRoute waits for completion, so we don't need .wait()
 
-            return execution.transactionHash || '';
+            // Extract transaction hash from the first step (source chain transaction)
+            // This is the transaction where the user pays
+            const firstStep = executedRoute.steps[0];
+            const execution = firstStep.execution;
+
+            // Find the process that has a transaction hash
+            const processWithHash = execution?.process.find((p: any) => p.txHash);
+
+            return processWithHash?.txHash || '';
         } catch (error) {
             console.error('Error executing settlement:', error);
             throw error;

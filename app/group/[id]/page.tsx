@@ -7,7 +7,30 @@ import { yellowService } from '@/lib/yellow/service';
 import { useAppStore } from '@/lib/store';
 import { formatAddress, formatCurrency, formatDate, calculateBalances, simplifyDebts } from '@/lib/utils/helpers';
 import { firebaseService } from '@/lib/firebase/database';
+import SettlementModal from '@/components/SettlementModal';
 import Link from 'next/link';
+
+// Helper function to get block explorer URL
+function getExplorerUrl(txHash: string, chainId?: number): string | null {
+    const explorers: { [key: number]: string } = {
+        1: 'https://etherscan.io/tx/',
+        11155111: 'https://sepolia.etherscan.io/tx/',
+        137: 'https://polygonscan.com/tx/',
+        80002: 'https://mumbai.polygonscan.com/tx/',
+        42161: 'https://arbiscan.io/tx/',
+        421614: 'https://sepolia.arbiscan.io/tx/',
+        10: 'https://optimistic.etherscan.io/tx/',
+        11155420: 'https://sepolia-optimism.etherscan.io/tx/',
+        56: 'https://bscscan.com/tx/',
+    };
+
+    if (chainId && explorers[chainId]) {
+        return explorers[chainId] + txHash;
+    }
+
+    return null;
+}
+
 
 export default function GroupDashboardPage() {
     const params = useParams();
@@ -18,6 +41,8 @@ export default function GroupDashboardPage() {
     const sessionId = params.id as string;
     const [isLoading, setIsLoading] = useState(true);
     const [showAddExpense, setShowAddExpense] = useState(false);
+    const [showSettlement, setShowSettlement] = useState(false);
+    const [selectedDebt, setSelectedDebt] = useState<any>(null);
     const [newExpense, setNewExpense] = useState({
         amount: '',
         description: '',
@@ -347,32 +372,42 @@ export default function GroupDashboardPage() {
                         {simplifiedDebts.length > 0 && (
                             <div className="mb-6">
                                 <h3 className="text-xl font-bold text-white mb-3">Suggested Settlements</h3>
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     {simplifiedDebts.map((debt, idx) => (
                                         <div
                                             key={idx}
-                                            className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 text-sm"
+                                            className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4"
                                         >
-                                            <span className="text-white">{formatAddress(debt.from)}</span>
-                                            <span className="text-gray-400 mx-2">→</span>
-                                            <span className="text-white">{formatAddress(debt.to)}</span>
-                                            <span className="text-purple-400 ml-2 font-semibold">
-                                                {formatCurrency(debt.amount)}
-                                            </span>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <span className="text-white font-medium">{formatAddress(debt.from)}</span>
+                                                    <span className="text-gray-400">→</span>
+                                                    <span className="text-white font-medium">{formatAddress(debt.to)}</span>
+                                                </div>
+                                                <span className="text-purple-400 font-bold">
+                                                    {formatCurrency(debt.amount)}
+                                                </span>
+                                            </div>
+                                            {debt.from.toLowerCase() === userAddress?.toLowerCase() && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedDebt({
+                                                            from: debt.from,
+                                                            to: debt.to,
+                                                            amount: debt.amount,
+                                                            currency: 'USDC'
+                                                        });
+                                                        setShowSettlement(true);
+                                                    }}
+                                                    className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-medium transition-all duration-200 text-sm"
+                                                >
+                                                    💳 Settle with LI.FI
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        )}
-
-                        {/* Settlement Button */}
-                        {balances.length > 0 && (
-                            <button
-                                onClick={() => alert('LI.FI settlement coming soon!')}
-                                className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-2xl font-semibold transition-all duration-200 shadow-lg shadow-purple-500/50"
-                            >
-                                Settle with LI.FI
-                            </button>
                         )}
                     </div>
                 </div>
@@ -441,6 +476,75 @@ export default function GroupDashboardPage() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {/* Settlement Modal */}
+            {showSettlement && selectedDebt && (
+                <SettlementModal
+                    debt={selectedDebt}
+                    onClose={() => {
+                        setShowSettlement(false);
+                        setSelectedDebt(null);
+                    }}
+                    onSettle={async (txHash) => {
+                        console.log('💰 Settlement completed:', txHash);
+
+                        try {
+                            // Create settlement record
+                            const settlement = {
+                                id: `settlement-${Date.now()}`,
+                                from: selectedDebt.from,
+                                to: selectedDebt.to,
+                                amount: selectedDebt.amount,
+                                currency: selectedDebt.currency,
+                                txHash: txHash,
+                                timestamp: Date.now(),
+                                status: 'completed',
+                            };
+
+                            // Save to Firebase
+                            await firebaseService.addSettlement(sessionId, settlement);
+                            console.log('✅ Settlement saved to Firebase');
+
+                            // Try to send to Yellow Network (optional)
+                            try {
+                                if (typeof (yellowService as any).recordSettlement === 'function') {
+                                    const messageSigner = async (message: string) => {
+                                        return `signature-${Date.now()}`;
+                                    };
+                                    await (yellowService as any).recordSettlement(sessionId, settlement, messageSigner);
+                                    console.log('✅ Settlement sent to Yellow Network');
+                                }
+                            } catch (yellowError) {
+                                console.warn('⚠️ Could not send to Yellow Network:', yellowError);
+                                // Continue anyway - Firebase save is more important
+                            }
+
+                            console.log('✅ Settlement recorded successfully');
+
+                            // Show success message with transaction link
+                            const explorerUrl = getExplorerUrl(txHash, selectedDebt.chainId);
+                            alert(
+                                `🎉 Settlement successful!\n\n` +
+                                `Amount: ${formatCurrency(selectedDebt.amount)}\n` +
+                                `From: ${formatAddress(selectedDebt.from)}\n` +
+                                `To: ${formatAddress(selectedDebt.to)}\n\n` +
+                                `Transaction: ${txHash.substring(0, 10)}...\n\n` +
+                                (explorerUrl ? `View on explorer:\n${explorerUrl}` : 'Check your wallet for details')
+                            );
+
+                            // Close modal
+                            setShowSettlement(false);
+                            setSelectedDebt(null);
+                        } catch (error) {
+                            console.error('Error recording settlement:', error);
+                            alert(
+                                `⚠️ Transaction completed but failed to record:\n${txHash}\n\n` +
+                                `Please save this transaction hash for your records.`
+                            );
+                        }
+                    }}
+                />
             )}
         </div>
     );
