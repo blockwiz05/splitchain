@@ -58,6 +58,13 @@ export default function GroupDashboardPage() {
     const [isAddingMember, setIsAddingMember] = useState(false);
     const [addMemberError, setAddMemberError] = useState<string | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [settlementSuccess, setSettlementSuccess] = useState<{
+        amount: number;
+        from: string;
+        to: string;
+        txHash: string;
+        chainId?: number;
+    } | null>(null);
 
     const showToast = (message: string, type: 'success' | 'error' = 'success') => {
         setToast({ message, type });
@@ -132,11 +139,15 @@ export default function GroupDashboardPage() {
         };
     }, [sessionId]);
 
-    // Calculate balances when expenses change
+    // Calculate balances when expenses or settlements change
     useEffect(() => {
         if (currentGroup && currentGroup.expenses && currentGroup.expenses.length > 0) {
             const participantAddresses = currentGroup.participants.map(p => p.address);
-            const calculatedBalances = calculateBalances(currentGroup.expenses, participantAddresses);
+            const calculatedBalances = calculateBalances(
+                currentGroup.expenses,
+                participantAddresses,
+                currentGroup.settlements
+            );
 
             const balanceArray = Object.entries(calculatedBalances).map(([address, amount]) => ({
                 address,
@@ -147,7 +158,7 @@ export default function GroupDashboardPage() {
 
             updateBalances(balanceArray);
         }
-    }, [currentGroup, currentGroup?.expenses, updateBalances]);
+    }, [currentGroup, currentGroup?.expenses, currentGroup?.settlements, updateBalances]);
 
     const handleAddExpense = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -536,6 +547,76 @@ export default function GroupDashboardPage() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Transaction History */}
+                        {currentGroup?.settlements && currentGroup.settlements.length > 0 && (
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-3">Transaction History</h3>
+                                <div className="space-y-3">
+                                    {[...currentGroup.settlements]
+                                        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+                                        .map((settlement, idx) => {
+                                            const explorerUrl = settlement.txHash
+                                                ? getExplorerUrl(settlement.txHash, settlement.fromChain)
+                                                : null;
+                                            return (
+                                                <div
+                                                    key={settlement.id || idx}
+                                                    className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4"
+                                                >
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <span className="text-white font-medium">
+                                                                {formatAddress(settlement.from)}
+                                                            </span>
+                                                            <span className="text-gray-400">→</span>
+                                                            <span className="text-white font-medium">
+                                                                {formatAddress(settlement.to)}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-green-400 font-bold">
+                                                            {formatCurrency(settlement.amount)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`px-2 py-0.5 rounded-full font-medium ${
+                                                                settlement.status === 'completed'
+                                                                    ? 'bg-green-500/15 text-green-400 border border-green-500/30'
+                                                                    : settlement.status === 'pending'
+                                                                    ? 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30'
+                                                                    : 'bg-red-500/15 text-red-400 border border-red-500/30'
+                                                            }`}>
+                                                                {settlement.status}
+                                                            </span>
+                                                            {settlement.txHash && explorerUrl && (
+                                                                <a
+                                                                    href={explorerUrl}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-indigo-400 hover:text-indigo-300 font-mono transition-colors"
+                                                                >
+                                                                    {settlement.txHash.substring(0, 10)}...
+                                                                </a>
+                                                            )}
+                                                            {settlement.txHash && !explorerUrl && (
+                                                                <span className="text-gray-500 font-mono">
+                                                                    {settlement.txHash.substring(0, 10)}...
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {settlement.timestamp && (
+                                                            <span className="text-gray-500">
+                                                                {formatDate(settlement.timestamp)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
@@ -787,30 +868,82 @@ export default function GroupDashboardPage() {
 
                             console.log('✅ Settlement recorded successfully');
 
-                            // Show success message with transaction link
-                            const explorerUrl = getExplorerUrl(txHash, selectedDebt.chainId);
-                            alert(
-                                `🎉 Settlement successful!\n\n` +
-                                `Amount: ${formatCurrency(selectedDebt.amount)}\n` +
-                                `From: ${formatAddress(selectedDebt.from)}\n` +
-                                `To: ${formatAddress(selectedDebt.to)}\n\n` +
-                                `Transaction: ${txHash.substring(0, 10)}...\n\n` +
-                                (explorerUrl ? `View on explorer:\n${explorerUrl}` : 'Check your wallet for details')
-                            );
+                            // Show success overlay
+                            setSettlementSuccess({
+                                amount: selectedDebt.amount,
+                                from: selectedDebt.from,
+                                to: selectedDebt.to,
+                                txHash,
+                                chainId: selectedDebt.chainId,
+                            });
 
-                            // Close modal
+                            // Close settlement modal
                             setShowSettlement(false);
                             setSelectedDebt(null);
                         } catch (error) {
                             console.error('Error recording settlement:', error);
-                            alert(
-                                `⚠️ Transaction completed but failed to record:\n${txHash}\n\n` +
-                                `Please save this transaction hash for your records.`
-                            );
+                            showToast(`Transaction sent but failed to record. Hash: ${txHash.substring(0, 10)}...`, 'error');
                         }
                     }}
                 />
             )}
+            {/* Settlement Success Overlay */}
+            {settlementSuccess && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-900 border border-green-500/30 rounded-2xl p-8 max-w-md w-full text-center animate-scale-in">
+                        {/* Animated Checkmark */}
+                        <div className="w-20 h-20 mx-auto mb-6 bg-green-500/10 rounded-full flex items-center justify-center border-2 border-green-500/40">
+                            <svg className="w-10 h-10 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <path className="animate-checkmark" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+
+                        <h3 className="text-2xl font-bold text-white mb-2">Settlement Successful!</h3>
+                        <p className="text-gray-400 mb-6">Your payment has been sent on-chain.</p>
+
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-left space-y-3">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Amount</span>
+                                <span className="text-white font-bold">{formatCurrency(settlementSuccess.amount)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">From</span>
+                                <span className="text-white font-mono">{formatAddress(settlementSuccess.from)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">To</span>
+                                <span className="text-white font-mono">{formatAddress(settlementSuccess.to)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm items-center">
+                                <span className="text-gray-400">Tx Hash</span>
+                                {(() => {
+                                    const url = getExplorerUrl(settlementSuccess.txHash, settlementSuccess.chainId);
+                                    return url ? (
+                                        <a
+                                            href={url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-indigo-400 hover:text-indigo-300 font-mono transition-colors"
+                                        >
+                                            {settlementSuccess.txHash.substring(0, 14)}...
+                                        </a>
+                                    ) : (
+                                        <span className="text-white font-mono">{settlementSuccess.txHash.substring(0, 14)}...</span>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setSettlementSuccess(null)}
+                            className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-semibold transition-all duration-200"
+                        >
+                            Done
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Toast Notification */}
             {toast && (
                 <div className="fixed bottom-6 right-6 z-50 animate-fade-in-up">

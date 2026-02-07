@@ -36,12 +36,14 @@ export interface Balance {
 }
 
 export interface Settlement {
+    id: string;
     from: string;
     to: string;
     amount: number;
     currency: string;
-    fromChain: number;
-    toChain: number;
+    fromChain?: number;
+    toChain?: number;
     status: 'pending' | 'processing' | 'completed' | 'failed';
     txHash?: string;
+    timestamp: number;
 }

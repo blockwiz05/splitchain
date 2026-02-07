@@ -39,7 +39,7 @@ export function generateId(): string {
 /**
  * Calculate net balances from expenses
  */
-export function calculateBalances(expenses: any[], participants: string[]) {
+export function calculateBalances(expenses: any[], participants: string[], settlements?: any[]) {
     const balances: { [address: string]: number } = {};
 
     // Initialize all participants with 0 balance
@@ -47,7 +47,7 @@ export function calculateBalances(expenses: any[], participants: string[]) {
         balances[addr] = 0;
     });
 
-    // Calculate balances
+    // Calculate balances from expenses
     expenses.forEach((expense) => {
         const { amount, paidBy, splitAmong } = expense;
         const splitAmount = amount / splitAmong.length;
@@ -60,6 +60,18 @@ export function calculateBalances(expenses: any[], participants: string[]) {
             balances[addr] = (balances[addr] || 0) - splitAmount;
         });
     });
+
+    // Apply completed settlements to balances
+    if (settlements) {
+        settlements.forEach((settlement) => {
+            if (settlement.status === 'completed') {
+                // The payer (from) paid money, so credit them (reduce their debt)
+                balances[settlement.from] = (balances[settlement.from] || 0) + settlement.amount;
+                // The receiver (to) received money, so debit them (reduce their credit)
+                balances[settlement.to] = (balances[settlement.to] || 0) - settlement.amount;
+            }
+        });
+    }
 
     return balances;
 }
