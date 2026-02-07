@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { lifiService } from '@/lib/lifi/service';
 import { formatCurrency, formatAddress } from '@/lib/utils/helpers';
-import { MAINNET_CHAINS, TESTNET_CHAINS } from '@/lib/config/chains';
+import { MAINNET_CHAINS } from '@/lib/config/chains';
 
 interface SettlementModalProps {
     debt: {
@@ -19,14 +19,13 @@ interface SettlementModalProps {
 
 export default function SettlementModal({ debt, onClose, onSettle, preferredChains }: SettlementModalProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [fromChain, setFromChain] = useState(11155111); // Sepolia defaults
-    const [toChain, setToChain] = useState(421614); // Arbitrum Sepolia default
+    const [fromChain, setFromChain] = useState(1); // Ethereum default
+    const [toChain, setToChain] = useState(42161); // Arbitrum default
     const [routes, setRoutes] = useState<any[]>([]);
     const [selectedRoute, setSelectedRoute] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
-    const [useTestnet, setUseTestnet] = useState(true);
 
-    const chains = useTestnet ? TESTNET_CHAINS : MAINNET_CHAINS;
+    const chains = MAINNET_CHAINS;
 
     // Filter available destination chains based on user preferences
     const availableToChains = (preferredChains && preferredChains.length > 0)
@@ -128,19 +127,15 @@ export default function SettlementModal({ debt, onClose, onSettle, preferredChai
 
             // Use viem to create a wallet client
             const { createWalletClient, custom, parseAbi } = await import('viem');
-            const { mainnet, sepolia, polygon, polygonAmoy, arbitrum, arbitrumSepolia, optimism, optimismSepolia, bsc } = await import('viem/chains');
+            const { mainnet, polygon, arbitrum, optimism, bsc } = await import('viem/chains');
 
             // Helper to get viem chain object
             const getViemChain = (chainId: number) => {
                 switch (chainId) {
                     case 1: return mainnet;
-                    case 11155111: return sepolia;
                     case 137: return polygon;
-                    case 80002: return polygonAmoy;
                     case 42161: return arbitrum;
-                    case 421614: return arbitrumSepolia;
                     case 10: return optimism;
-                    case 11155420: return optimismSepolia;
                     case 56: return bsc;
                     default: return mainnet; // Fallback
                 }
@@ -247,26 +242,6 @@ export default function SettlementModal({ debt, onClose, onSettle, preferredChai
 
                 {/* Content */}
                 <div className="p-6 space-y-6">
-                    {/* Testnet Toggle */}
-                    <div className="flex items-center justify-between p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                        <div className="flex items-center gap-2">
-                            <span className="text-yellow-400">🧪</span>
-                            <span className="text-sm font-medium text-yellow-300">
-                                {useTestnet ? 'Testnet Mode (Safe for Testing)' : 'Mainnet Mode (Real Funds)'}
-                            </span>
-                        </div>
-                        <button
-                            onClick={() => setUseTestnet(!useTestnet)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${useTestnet ? 'bg-yellow-500' : 'bg-gray-600'
-                                }`}
-                        >
-                            <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${useTestnet ? 'translate-x-6' : 'translate-x-1'
-                                    }`}
-                            />
-                        </button>
-                    </div>
-
                     {/* From Chain Selection */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-3">

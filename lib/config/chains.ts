@@ -6,9 +6,4 @@ export const MAINNET_CHAINS = [
     { id: 56, name: 'BSC', icon: '💛', usdc: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d' },
 ];
 
-export const TESTNET_CHAINS = [
-    { id: 11155111, name: 'Sepolia', icon: '⟠', usdc: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' },
-    { id: 80002, name: 'Polygon Amoy', icon: '⬡', usdc: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582' },
-    { id: 421614, name: 'Arb Sepolia', icon: '🔷', usdc: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d' },
-    { id: 11155420, name: 'OP Sepolia', icon: '🔴', usdc: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7' },
-];
+

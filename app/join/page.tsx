@@ -20,7 +20,6 @@ export default function JoinGroupPage() {
     const [isJoining, setIsJoining] = useState(false);
     const [creatorEns, setCreatorEns] = useState<string | null>(null);
     const [selectedChains, setSelectedChains] = useState<number[]>([]);
-    const [useTestnet, setUseTestnet] = useState(true);
 
     const handleSessionIdChange = async (value: string) => {
         setSessionId(value);
@@ -241,8 +240,6 @@ export default function JoinGroupPage() {
                         <ChainSelector
                             selectedChains={selectedChains}
                             onChange={setSelectedChains}
-                            useTestnet={useTestnet}
-                            setUseTestnet={setUseTestnet}
                         />
                         {selectedChains.length === 0 && (
                             <p className="mt-2 text-sm text-red-400">

@@ -1,24 +1,20 @@
 'use client';
 
-import { MAINNET_CHAINS, TESTNET_CHAINS } from '@/lib/config/chains';
+import { MAINNET_CHAINS } from '@/lib/config/chains';
 
 interface ChainSelectorProps {
     selectedChains: number[];
     onChange: (chains: number[]) => void;
-    useTestnet: boolean;
-    setUseTestnet: (useTestnet: boolean) => void;
     allowMultiple?: boolean;
 }
 
 export function ChainSelector({
     selectedChains,
     onChange,
-    useTestnet,
-    setUseTestnet,
     allowMultiple = true
 }: ChainSelectorProps) {
 
-    const currentChains = useTestnet ? TESTNET_CHAINS : MAINNET_CHAINS;
+    const currentChains = MAINNET_CHAINS;
 
     const handleChainToggle = (chainId: number) => {
         if (!allowMultiple) {
@@ -38,27 +34,13 @@ export function ChainSelector({
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+            <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
                 <div className="flex items-center gap-2">
-                    <span className="text-yellow-400">🧪</span>
-                    <span className="text-sm font-medium text-yellow-300">
-                        {useTestnet ? 'Testnet Networks' : 'Mainnet Networks'}
+                    <span className="text-indigo-400">🌐</span>
+                    <span className="text-sm font-medium text-indigo-300">
+                        Supported Networks
                     </span>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => {
-                        setUseTestnet(!useTestnet);
-                        onChange([]); // Reset selection when network type changes
-                    }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${useTestnet ? 'bg-yellow-500' : 'bg-gray-600'
-                        }`}
-                >
-                    <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${useTestnet ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                    />
-                </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

@@ -19,7 +19,6 @@ export default function CreateGroupPage() {
     const [initialAmount, setInitialAmount] = useState('100');
     const [isCreating, setIsCreating] = useState(false);
     const [selectedChains, setSelectedChains] = useState<number[]>([]);
-    const [useTestnet, setUseTestnet] = useState(true);
 
     const handleCreateGroup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -214,8 +213,6 @@ export default function CreateGroupPage() {
                         <ChainSelector
                             selectedChains={selectedChains}
                             onChange={setSelectedChains}
-                            useTestnet={useTestnet}
-                            setUseTestnet={setUseTestnet}
                         />
                         {selectedChains.length === 0 && (
                             <p className="mt-2 text-sm text-red-400">
