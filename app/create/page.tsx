@@ -16,7 +16,6 @@ export default function CreateGroupPage() {
     const { setCurrentGroup, setIsLoading, setError } = useAppStore();
 
     const [groupName, setGroupName] = useState('');
-    const [initialAmount, setInitialAmount] = useState('100');
     const [isCreating, setIsCreating] = useState(false);
     const [selectedChains, setSelectedChains] = useState<number[]>([]);
 
@@ -64,12 +63,13 @@ export default function CreateGroupPage() {
             };
 
             // Create Yellow Network session
+            // We pass '0' as initial amount since we don't lock collateral on-chain in this version
             const sessionId = await yellowService.createSession(
                 groupName,
                 userAddress,
                 [], // No initial participants
                 messageSigner,
-                (parseFloat(initialAmount) * 1000000).toString() // Convert to USDC units (6 decimals)
+                '0' // Initial amount
             );
 
             // Create group object
@@ -182,26 +182,6 @@ export default function CreateGroupPage() {
                         />
                         <p className="mt-2 text-sm text-gray-500">
                             Choose a memorable name for your expense group
-                        </p>
-                    </div>
-
-                    {/* Initial Amount */}
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Initial Collateral (USDC)
-                        </label>
-                        <input
-                            type="number"
-                            value={initialAmount}
-                            onChange={(e) => setInitialAmount(e.target.value)}
-                            placeholder="100"
-                            min="1"
-                            step="0.01"
-                            required
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        />
-                        <p className="mt-2 text-sm text-gray-500">
-                            Amount to lock in Yellow Network state channel (refundable)
                         </p>
                     </div>
 

@@ -53,9 +53,21 @@ export default function GroupDashboardPage() {
 
     // Add Member State
     const [showAddMember, setShowAddMember] = useState(false);
+    const [showParticipants, setShowParticipants] = useState(false);
     const [newMemberInput, setNewMemberInput] = useState('');
     const [isAddingMember, setIsAddingMember] = useState(false);
     const [addMemberError, setAddMemberError] = useState<string | null>(null);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    const handleCopyAddress = (address: string) => {
+        navigator.clipboard.writeText(address);
+        showToast('Address copied to clipboard!');
+    };
 
     // Load group data on mount (fixes refresh issue)
     useEffect(() => {
@@ -193,8 +205,10 @@ export default function GroupDashboardPage() {
             setShowAddExpense(false);
 
             console.log('✅ Expense added successfully');
+            showToast('Expense added successfully!');
         } catch (error) {
             console.error('Error adding expense:', error);
+            showToast('Failed to add expense', 'error');
         }
     };
 
@@ -264,12 +278,14 @@ export default function GroupDashboardPage() {
             setShowAddMember(false);
             setNewMemberInput('');
             console.log('✅ Member added successfully:', newParticipant);
+            showToast('Member added successfully!');
 
             // Note: Firebase subscription will automatically update the UI
 
         } catch (err: any) {
             console.error('Error adding member:', err);
             setAddMemberError(err.message || 'Failed to add member');
+            showToast(err.message || 'Failed to add member', 'error');
         } finally {
             setIsAddingMember(false);
         }
@@ -357,6 +373,14 @@ export default function GroupDashboardPage() {
                             <p className="text-gray-400">Session ID: {sessionId}</p>
                         </div>
                         <div className="flex gap-3">
+                            {/* View Participants Button */}
+                            <button
+                                onClick={() => setShowParticipants(true)}
+                                className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-all duration-200"
+                            >
+                                👥 Members ({currentGroup?.participants.length})
+                            </button>
+
                             {/* Add Member Button - Only for creator */}
                             {userAddress && currentGroup?.createdBy === userAddress && (
                                 <button
@@ -516,6 +540,87 @@ export default function GroupDashboardPage() {
                 </div>
             </main>
 
+
+
+            {/* Participants Modal */}
+            {showParticipants && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-2xl font-bold text-white">Group Members</h3>
+                            <button
+                                onClick={() => setShowParticipants(false)}
+                                className="text-gray-400 hover:text-white transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {currentGroup?.participants.map((participant) => (
+                                <div
+                                    key={participant.address}
+                                    className="p-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between group hover:bg-white/10 transition-all"
+                                >
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                                            {participant.ensName ? participant.ensName[0].toUpperCase() : participant.address.slice(2, 4)}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium text-white truncate">
+                                                    {participant.ensName || formatAddress(participant.address)}
+                                                </span>
+                                                {participant.address === userAddress && (
+                                                    <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 text-xs rounded-full border border-indigo-500/30">
+                                                        You
+                                                    </span>
+                                                )}
+                                                {participant.address === currentGroup.createdBy && (
+                                                    <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-300 text-xs rounded-full border border-yellow-500/30">
+                                                        Admin
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-sm text-gray-500 truncate font-mono">
+                                                {participant.address}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => handleCopyAddress(participant.address)}
+                                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        title="Copy Address"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Add Member Button inside Modal (Admin Only) */}
+                        {userAddress && currentGroup?.createdBy === userAddress && (
+                            <button
+                                onClick={() => {
+                                    setShowParticipants(false);
+                                    setShowAddMember(true);
+                                }}
+                                className="w-full mt-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Add New Member
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Add Member Modal */}
             {showAddMember && (
@@ -705,6 +810,20 @@ export default function GroupDashboardPage() {
                         }
                     }}
                 />
+            )}
+            {/* Toast Notification */}
+            {toast && (
+                <div className="fixed bottom-6 right-6 z-50 animate-fade-in-up">
+                    <div className={`px-6 py-4 rounded-xl shadow-2xl border flex items-center gap-3 ${toast.type === 'success'
+                        ? 'bg-slate-900/90 border-green-500/50 text-green-400'
+                        : 'bg-slate-900/90 border-red-500/50 text-red-400'
+                        }`}>
+                        <span className="text-xl">
+                            {toast.type === 'success' ? '✅' : '❌'}
+                        </span>
+                        <span className="font-medium text-white">{toast.message}</span>
+                    </div>
+                </div>
             )}
         </div>
     );
