@@ -47,15 +47,10 @@ export default function SettlementModal({ debt, onClose, onSettle, preferredChai
     const handleGetRoutes = async () => {
         setIsLoading(true);
         setError(null);
+        setRoutes([]);
+        setSelectedRoute(null);
 
         try {
-            // Validation: Prevent same chain + same token
-            if (fromChain === toChain) {
-                setError('⚠️ Please select different chains for cross-chain settlement. For same-chain transfers, use a regular wallet transfer.');
-                setIsLoading(false);
-                return;
-            }
-
             const fromChainData = chains.find(c => c.id === fromChain);
             const toChainData = chains.find(c => c.id === toChain);
 
@@ -65,12 +60,34 @@ export default function SettlementModal({ debt, onClose, onSettle, preferredChai
                 return;
             }
 
+            // Handle Same Chain (Direct Transfer)
+            if (fromChain === toChain) {
+                console.log('🔄 Same chain detected, setting up direct transfer');
+                const amountInUnits = Math.floor(debt.amount * 1000000).toString(); // USDC 6 decimals
+
+                const directRoute = {
+                    id: 'direct-transfer',
+                    fromChainId: fromChain,
+                    toChainId: toChain,
+                    fromAmount: amountInUnits,
+                    toAmount: amountInUnits,
+                    estimatedTime: 15, // ~15 seconds
+                    estimatedGas: '100000000000000', // Dummy gas value
+                    isDirect: true
+                };
+
+                setRoutes([directRoute]);
+                setSelectedRoute(directRoute);
+                setIsLoading(false);
+                return;
+            }
+
             const routeRequest = {
                 fromChain: fromChain,
                 toChain: toChain,
                 fromToken: fromChainData.usdc,
                 toToken: toChainData.usdc,
-                fromAmount: (debt.amount * 1000000).toString(), // Convert to USDC decimals (6)
+                fromAmount: Math.floor(debt.amount * 1000000).toString(), // Convert to USDC decimals (6)
                 fromAddress: debt.from,
                 toAddress: debt.to,
             };
@@ -108,10 +125,9 @@ export default function SettlementModal({ debt, onClose, onSettle, preferredChai
             }
 
             console.log('🔐 Wallet connected, executing settlement...');
-            console.log('📋 Route:', selectedRoute);
 
-            // Use viem to create a wallet client (native support for LI.FI SDK)
-            const { createWalletClient, custom } = await import('viem');
+            // Use viem to create a wallet client
+            const { createWalletClient, custom, parseAbi } = await import('viem');
             const { mainnet, sepolia, polygon, polygonAmoy, arbitrum, arbitrumSepolia, optimism, optimismSepolia, bsc } = await import('viem/chains');
 
             // Helper to get viem chain object
@@ -142,15 +158,41 @@ export default function SettlementModal({ debt, onClose, onSettle, preferredChai
                 throw new Error('No account found');
             }
 
-            // Re-create the client with the account attached
-            // LI.FI SDK needs walletClient.account.address to exist
+            // Create client with account
             const client = createWalletClient({
                 account: address,
                 chain: getViemChain(fromChain),
                 transport: custom((window as any).ethereum)
             });
 
-            // Execute the settlement via LI.FI
+            // Handle Direct Transfer
+            if (selectedRoute.id === 'direct-transfer') {
+                const tokenAddress = chains.find(c => c.id === fromChain)?.usdc;
+                if (!tokenAddress) throw new Error("USDC address not found for this chain");
+
+                console.log('💸 Executing direct transfer:', {
+                    token: tokenAddress,
+                    to: debt.to,
+                    amount: selectedRoute.fromAmount
+                });
+
+                const hash = await client.writeContract({
+                    address: tokenAddress as `0x${string}`,
+                    abi: parseAbi(['function transfer(address to, uint256 amount) returns (bool)']),
+                    functionName: 'transfer',
+                    args: [debt.to as `0x${string}`, BigInt(selectedRoute.fromAmount)],
+                    chain: getViemChain(fromChain),
+                    account: address
+                });
+
+                console.log('✅ Direct transfer successful! Tx:', hash);
+                onSettle(hash);
+                onClose();
+                return;
+            }
+
+            // Handle LI.FI Settlement
+            console.log('📋 Executing LI.FI Route:', selectedRoute);
             const txHash = await lifiService.executeSettlement(
                 selectedRoute,
                 client,
@@ -289,8 +331,8 @@ export default function SettlementModal({ debt, onClose, onSettle, preferredChai
                                 </span>
                             </div>
                             {fromChain === toChain && (
-                                <div className="mt-2 text-xs text-yellow-400">
-                                    ⚠️ Same chain selected - please choose different chains for cross-chain settlement
+                                <div className="mt-2 text-xs text-green-400">
+                                    ✅ Same chain selected - performing direct transfer
                                 </div>
                             )}
                         </div>
@@ -331,7 +373,9 @@ export default function SettlementModal({ debt, onClose, onSettle, preferredChai
                                         }`}
                                 >
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-white font-medium">Route {index + 1}</span>
+                                        <span className="text-white font-medium">
+                                            {(route as any).isDirect ? 'Direct Transfer' : `Route ${index + 1}`}
+                                        </span>
                                         <span className="text-green-400 font-bold">
                                             {formatCurrency(parseFloat(route.toAmount) / 1000000)}
                                         </span>
@@ -376,7 +420,7 @@ export default function SettlementModal({ debt, onClose, onSettle, preferredChai
                                     Processing Settlement...
                                 </span>
                             ) : (
-                                `Settle ${formatCurrency(debt.amount)} via LI.FI`
+                                `Settle ${formatCurrency(debt.amount)} via ${selectedRoute.id === 'direct-transfer' ? 'Direct Transfer' : 'LI.FI'}`
                             )}
                         </button>
                     )}
