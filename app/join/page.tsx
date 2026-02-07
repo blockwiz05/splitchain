@@ -8,6 +8,7 @@ import { resolveAddress } from '@/lib/ens/resolver';
 import { useAppStore } from '@/lib/store';
 import { firebaseService } from '@/lib/firebase/database';
 import Link from 'next/link';
+import { ChainSelector } from '@/components/ui/ChainSelector';
 
 export default function JoinGroupPage() {
     const router = useRouter();
@@ -18,6 +19,8 @@ export default function JoinGroupPage() {
     const [lockAmount, setLockAmount] = useState('100');
     const [isJoining, setIsJoining] = useState(false);
     const [creatorEns, setCreatorEns] = useState<string | null>(null);
+    const [selectedChains, setSelectedChains] = useState<number[]>([]);
+    const [useTestnet, setUseTestnet] = useState(true);
 
     const handleSessionIdChange = async (value: string) => {
         setSessionId(value);
@@ -95,6 +98,7 @@ export default function JoinGroupPage() {
             // Add current user as participant
             await firebaseService.addParticipant(sessionId, {
                 address: userAddress,
+                preferredChains: selectedChains,
             });
 
             // Reload group to get updated participants
@@ -229,6 +233,24 @@ export default function JoinGroupPage() {
                         </p>
                     </div>
 
+                    {/* Preferred Chains */}
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Preferred Chains for Receiving Funds
+                        </label>
+                        <ChainSelector
+                            selectedChains={selectedChains}
+                            onChange={setSelectedChains}
+                            useTestnet={useTestnet}
+                            setUseTestnet={setUseTestnet}
+                        />
+                        {selectedChains.length === 0 && (
+                            <p className="mt-2 text-sm text-red-400">
+                                Please select at least one preferred chain.
+                            </p>
+                        )}
+                    </div>
+
                     {/* Info Box */}
                     <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-6">
                         <div className="flex gap-3">
@@ -250,7 +272,7 @@ export default function JoinGroupPage() {
                     {/* Submit Button */}
                     <button
                         type="submit"
-                        disabled={isJoining || !sessionId}
+                        disabled={isJoining || !sessionId || selectedChains.length === 0}
                         className="w-full px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl font-semibold text-lg transition-all duration-200 shadow-2xl shadow-indigo-500/50 hover:shadow-indigo-500/70"
                     >
                         {isJoining ? (

@@ -1,30 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SplitChain - Cross-Chain Expense Sharing
+
+SplitChain is a decentralized expense sharing application built for the modern multi-chain world. It leverages Yellow Network for instant, gasless expense tracking via state channels and LI.FI for seamless cross-chain settlements.
+
+## Features
+
+- **Instant Expense Tracking**: Add expenses instantly without waiting for block confirmations using Yellow Network state channels.
+- **Cross-Chain Settlements**: Settle debts across 20+ chains (Ethereum, Polygon, Arbitrum, Optimism, Base, etc.) powered by LI.FI.
+- **Preferred Chain Selection**: Users can select their preferred networks for receiving settlements.
+- **Restricted Settlements**: Settlement options are automatically filtered to match the recipient's preferred chains.
+- **Group Dashboard**: Manage multiple expense groups and track balances in real-time.
+- **ENS Integration**: Automatic resolution of ENS names and avatars.
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **State Channels**: Yellow Network
+- **Cross-Chain Bridge**: LI.FI
+- **Authentication**: Privy (Email & Wallet Login)
+- **Database**: Firebase Realtime Database (for metadata sync)
+- **Styling**: Tailwind CSS
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-```
+2. Set up environment variables in `.env.local`:
+   ```bash
+   NEXT_PUBLIC_PRIVY_APP_ID=your_privy_app_id
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+   # ... other firebase config
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How it Works
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Create/Join a Group**: Users lock collateral into a state channel to join a group.
+2. **Add Expenses**: Expenses are signed off-chain and synced instantly to all participants.
+3. **Settle Up**: At the end of the session (or anytime), users can settle their debts.
+4. **Cross-Chain Magic**: The app uses LI.FI to find the best route to swap and bridge funds from the payer's chain to the payee's preferred chain in a single transaction.

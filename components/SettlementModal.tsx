@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { lifiService } from '@/lib/lifi/service';
 import { formatCurrency, formatAddress } from '@/lib/utils/helpers';
+import { MAINNET_CHAINS, TESTNET_CHAINS } from '@/lib/config/chains';
 
 interface SettlementModalProps {
     debt: {
@@ -13,35 +14,35 @@ interface SettlementModalProps {
     };
     onClose: () => void;
     onSettle: (txHash: string) => void;
+    preferredChains?: number[];
 }
 
-export default function SettlementModal({ debt, onClose, onSettle }: SettlementModalProps) {
+export default function SettlementModal({ debt, onClose, onSettle, preferredChains }: SettlementModalProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [fromChain, setFromChain] = useState(11155111); // Sepolia defaults (more reliable than Mumbai/Amoy)
+    const [fromChain, setFromChain] = useState(11155111); // Sepolia defaults
     const [toChain, setToChain] = useState(421614); // Arbitrum Sepolia default
     const [routes, setRoutes] = useState<any[]>([]);
     const [selectedRoute, setSelectedRoute] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [useTestnet, setUseTestnet] = useState(true);
 
-    // Mainnet chains
-    const mainnetChains = [
-        { id: 1, name: 'Ethereum', icon: '⟠', usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },
-        { id: 137, name: 'Polygon', icon: '⬡', usdc: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174' },
-        { id: 42161, name: 'Arbitrum', icon: '🔷', usdc: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8' },
-        { id: 10, name: 'Optimism', icon: '🔴', usdc: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607' },
-        { id: 56, name: 'BSC', icon: '💛', usdc: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d' },
-    ];
+    const chains = useTestnet ? TESTNET_CHAINS : MAINNET_CHAINS;
 
-    // Testnet chains
-    const testnetChains = [
-        { id: 11155111, name: 'Sepolia', icon: '⟠', usdc: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' },
-        { id: 80002, name: 'Polygon Amoy', icon: '⬡', usdc: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582' },
-        { id: 421614, name: 'Arb Sepolia', icon: '🔷', usdc: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d' },
-        { id: 11155420, name: 'OP Sepolia', icon: '🔴', usdc: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7' },
-    ];
+    // Filter available destination chains based on user preferences
+    const availableToChains = (preferredChains && preferredChains.length > 0)
+        ? chains.filter(c => preferredChains.includes(c.id))
+        : chains;
 
-    const chains = useTestnet ? testnetChains : mainnetChains;
+    // Ensure selected toChain is valid for the current preferences
+    useEffect(() => {
+        if (availableToChains.length > 0) {
+            // Check if current toChain is in the available list
+            const isValid = availableToChains.some(c => c.id === toChain);
+            if (!isValid) {
+                setToChain(availableToChains[0].id);
+            }
+        }
+    }, [availableToChains, toChain, preferredChains]);
 
     const handleGetRoutes = async () => {
         setIsLoading(true);
@@ -255,9 +256,14 @@ export default function SettlementModal({ debt, onClose, onSettle }: SettlementM
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-3">
                             To Chain (Recipient Receives On)
+                            {preferredChains && preferredChains.length > 0 && (
+                                <span className="ml-2 text-xs text-indigo-400 font-normal">
+                                    (Restricted to recipient's preference)
+                                </span>
+                            )}
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {chains.map((chain) => (
+                            {availableToChains.map((chain) => (
                                 <button
                                     key={chain.id}
                                     onClick={() => setToChain(chain.id)}

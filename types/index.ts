@@ -2,6 +2,7 @@ export interface User {
     address: string;
     ensName?: string;
     ensAvatar?: string;
+    preferredChains?: number[];
 }
 
 export interface Expense {
@@ -24,6 +25,7 @@ export interface GroupSession {
     expenses: Expense[];
     isActive: boolean;
     yellowSessionId?: string;
+    settlements?: Settlement[];
 }
 
 export interface Balance {

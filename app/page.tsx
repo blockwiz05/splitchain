@@ -38,6 +38,12 @@ export default function Home() {
 
           {ready && authenticated && user && (
             <div className="flex items-center gap-4">
+              <Link
+                href="/dashboard"
+                className="px-4 py-2 text-gray-300 hover:text-white transition-colors font-medium"
+              >
+                Dashboard
+              </Link>
               <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span className="text-sm text-gray-300">

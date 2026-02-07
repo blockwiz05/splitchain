@@ -6,7 +6,7 @@
 
 import { database } from './config';
 import { ref, set, get, update, onValue, push, off } from 'firebase/database';
-import { GroupSession, Expense } from '@/types';
+import { GroupSession, Expense, User } from '@/types';
 
 /**
  * Remove undefined values from object (Firebase doesn't allow undefined)
@@ -143,7 +143,7 @@ export const firebaseService = {
      */
     async addParticipant(
         sessionId: string,
-        participant: { address: string; ensName?: string }
+        participant: User
     ): Promise<void> {
         try {
             const group = await this.getGroup(sessionId);

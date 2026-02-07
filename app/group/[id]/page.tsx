@@ -244,6 +244,12 @@ export default function GroupDashboardPage() {
                         </span>
                     </Link>
                     <div className="flex items-center gap-4">
+                        <Link
+                            href="/dashboard"
+                            className="px-4 py-2 text-gray-300 hover:text-white transition-colors font-medium text-sm"
+                        >
+                            Dashboard
+                        </Link>
                         <div className="text-sm text-gray-400">
                             {formatAddress(userAddress)}
                         </div>
@@ -482,6 +488,11 @@ export default function GroupDashboardPage() {
             {showSettlement && selectedDebt && (
                 <SettlementModal
                     debt={selectedDebt}
+                    preferredChains={
+                        currentGroup?.participants.find(
+                            p => p.address.toLowerCase() === selectedDebt.to.toLowerCase()
+                        )?.preferredChains
+                    }
                     onClose={() => {
                         setShowSettlement(false);
                         setSelectedDebt(null);
