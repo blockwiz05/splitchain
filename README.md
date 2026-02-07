@@ -8,6 +8,7 @@ SplitChain is a decentralized expense sharing application built for the modern m
 - **Cross-Chain Settlements**: Settle debts across 20+ chains (Ethereum, Polygon, Arbitrum, Optimism, Base, etc.) powered by LI.FI.
 - **Preferred Chain Selection**: Users can select their preferred networks for receiving settlements.
 - **Restricted Settlements**: Settlement options are automatically filtered to match the recipient's preferred chains.
+- **Add Members**: Group creators can easily add new members by Ethereum address or ENS name.
 - **Group Dashboard**: Manage multiple expense groups and track balances in real-time.
 - **ENS Integration**: Automatic resolution of ENS names and avatars.
 

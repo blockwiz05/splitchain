@@ -9,6 +9,9 @@ import { formatAddress, formatCurrency, formatDate, calculateBalances, simplifyD
 import { firebaseService } from '@/lib/firebase/database';
 import SettlementModal from '@/components/SettlementModal';
 import Link from 'next/link';
+import { createPublicClient, http, isAddress } from 'viem';
+import { mainnet } from 'viem/chains';
+import { normalize } from 'viem/ens';
 
 // Helper function to get block explorer URL
 function getExplorerUrl(txHash: string, chainId?: number): string | null {
@@ -47,6 +50,12 @@ export default function GroupDashboardPage() {
         amount: '',
         description: '',
     });
+
+    // Add Member State
+    const [showAddMember, setShowAddMember] = useState(false);
+    const [newMemberInput, setNewMemberInput] = useState('');
+    const [isAddingMember, setIsAddingMember] = useState(false);
+    const [addMemberError, setAddMemberError] = useState<string | null>(null);
 
     // Load group data on mount (fixes refresh issue)
     useEffect(() => {
@@ -189,6 +198,83 @@ export default function GroupDashboardPage() {
         }
     };
 
+    const handleAddMember = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setAddMemberError(null);
+        setIsAddingMember(true);
+
+        try {
+            const input = newMemberInput.trim();
+            if (!input) {
+                throw new Error('Please enter an address or ENS name');
+            }
+
+            let resolvedAddress = '';
+            let ensName: string | undefined = undefined;
+
+            // Initialize Viem Client for Mainnet (ENS)
+            const publicClient = createPublicClient({
+                chain: mainnet,
+                transport: http()
+            });
+
+            if (isAddress(input)) {
+                resolvedAddress = input;
+                // Try to reverse resolve ENS (optional but nice)
+                try {
+                    const name = await publicClient.getEnsName({ address: input });
+                    if (name) ensName = name;
+                } catch (err) {
+                    console.warn('Could not reverse resolve ENS', err);
+                }
+            } else if (input.endsWith('.eth')) {
+                const address = await publicClient.getEnsAddress({
+                    name: normalize(input),
+                });
+                if (address) {
+                    resolvedAddress = address;
+                    ensName = input;
+                } else {
+                    throw new Error('ENS name could not be resolved');
+                }
+            } else {
+                throw new Error('Invalid Ethereum address or ENS name');
+            }
+
+            // Check if already in group
+            const exists = currentGroup?.participants.some(
+                p => p.address.toLowerCase() === resolvedAddress.toLowerCase()
+            );
+
+            if (exists) {
+                throw new Error('This user is already in the group');
+            }
+
+            // Create new participant object
+            // Note: We don't know their preferred chains yet, so it defaults to empty/undefined
+            const newParticipant = {
+                address: resolvedAddress,
+                ensName: ensName,
+            };
+
+            // Add to Firebase
+            await firebaseService.addParticipant(sessionId, newParticipant);
+
+            // Close modal and reset
+            setShowAddMember(false);
+            setNewMemberInput('');
+            console.log('✅ Member added successfully:', newParticipant);
+
+            // Note: Firebase subscription will automatically update the UI
+
+        } catch (err: any) {
+            console.error('Error adding member:', err);
+            setAddMemberError(err.message || 'Failed to add member');
+        } finally {
+            setIsAddingMember(false);
+        }
+    };
+
     if (!ready || isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
@@ -270,12 +356,23 @@ export default function GroupDashboardPage() {
                             <h1 className="text-4xl font-bold text-white mb-2">{groupName}</h1>
                             <p className="text-gray-400">Session ID: {sessionId}</p>
                         </div>
-                        <button
-                            onClick={() => setShowAddExpense(true)}
-                            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-indigo-500/50"
-                        >
-                            + Add Expense
-                        </button>
+                        <div className="flex gap-3">
+                            {/* Add Member Button - Only for creator */}
+                            {userAddress && currentGroup?.createdBy === userAddress && (
+                                <button
+                                    onClick={() => setShowAddMember(true)}
+                                    className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-all duration-200"
+                                >
+                                    + Add Member
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setShowAddExpense(true)}
+                                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-indigo-500/50"
+                            >
+                                + Add Expense
+                            </button>
+                        </div>
                     </div>
 
                     {/* Stats */}
@@ -418,6 +515,58 @@ export default function GroupDashboardPage() {
                     </div>
                 </div>
             </main>
+
+
+            {/* Add Member Modal */}
+            {showAddMember && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-md w-full">
+                        <h3 className="text-2xl font-bold text-white mb-4">Add Member</h3>
+                        <form onSubmit={handleAddMember} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Wallet Address or ENS Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newMemberInput}
+                                    onChange={(e) => setNewMemberInput(e.target.value)}
+                                    placeholder="0x... or name.eth"
+                                    required
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+
+                            {addMemberError && (
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400">
+                                    {addMemberError}
+                                </div>
+                            )}
+
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowAddMember(false);
+                                        setNewMemberInput('');
+                                        setAddMemberError(null);
+                                    }}
+                                    className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isAddingMember}
+                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-xl font-semibold transition-all"
+                                >
+                                    {isAddingMember ? 'Adding...' : 'Add Member'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Add Expense Modal */}
             {showAddExpense && (
