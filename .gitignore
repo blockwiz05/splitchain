@@ -45,3 +45,5 @@ next-env.d.ts
 *.md
 *.ps1
 .agent/
+
+.vercel
