@@ -5,6 +5,7 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { config } from './wagmi';
 import { mainnet } from 'wagmi/chains';
+import logo from "@/app/assets/logoWithoutName-splitchain.png"
 
 const queryClient = new QueryClient();
 
@@ -17,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 appearance: {
                     theme: 'dark',
                     accentColor: '#6366F1',
-                    logo: '/logo.png',
+                    logo: './logoWithoutName-splitchain.png',
                 },
                 embeddedWallets: {
                     ethereum: {

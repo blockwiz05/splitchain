@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Comfortaa } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/config/providers";
 
-const inter = Inter({
+const comfortaa = Comfortaa({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-comfortaa",
 });
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans antialiased bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 min-h-screen`}>
+      <body className={`${comfortaa.variable} font-sans antialiased min-h-screen`}>
         <Providers>
           {children}
         </Providers>

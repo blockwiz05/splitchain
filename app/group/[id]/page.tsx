@@ -9,9 +9,11 @@ import { formatAddress, formatCurrency, formatDate, calculateBalances, simplifyD
 import { firebaseService } from '@/lib/firebase/database';
 import SettlementModal from '@/components/SettlementModal';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createPublicClient, http, isAddress } from 'viem';
 import { mainnet } from 'viem/chains';
 import { normalize } from 'viem/ens';
+import logo from '@/app/assets/logo-splitchain.png';
 
 // Helper function to get block explorer URL
 function getExplorerUrl(txHash: string, chainId?: number): string | null {
@@ -276,7 +278,6 @@ export default function GroupDashboardPage() {
             }
 
             // Create new participant object
-            // Note: We don't know their preferred chains yet, so it defaults to empty/undefined
             const newParticipant = {
                 address: resolvedAddress,
                 ensName: ensName,
@@ -291,8 +292,6 @@ export default function GroupDashboardPage() {
             console.log('✅ Member added successfully:', newParticipant);
             showToast('Member added successfully!');
 
-            // Note: Firebase subscription will automatically update the UI
-
         } catch (err: any) {
             console.error('Error adding member:', err);
             setAddMemberError(err.message || 'Failed to add member');
@@ -304,10 +303,10 @@ export default function GroupDashboardPage() {
 
     if (!ready || isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <div className="text-white">Loading group...</div>
+            <div className="min-h-screen flex items-center justify-center bg-[#030014]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-2 border-[#822ca7] border-t-transparent rounded-full animate-spin" />
+                    <span className="text-gray-400 text-sm">Loading group...</span>
                 </div>
             </div>
         );
@@ -327,12 +326,16 @@ export default function GroupDashboardPage() {
                         </p>
                         <button
                             onClick={login}
-                            className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all duration-200"
+                            className="w-full cursor-pointer px-6 py-4 rounded-2xl bg-gradient-to-br from-[#822ca7] to-[#a855f7] text-white font-bold transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(130,44,167,0.4)]"
                         >
                             Connect Wallet
                         </button>
                     </div>
                 </div>
+                <style jsx global>{`
+                    @keyframes reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+                    .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+                `}</style>
             </div>
         );
     }
@@ -344,41 +347,50 @@ export default function GroupDashboardPage() {
     ) : [];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
+        <div className="min-h-screen bg-[#030014] text-white font-comfortaa relative overflow-hidden">
+            {/* Background effects */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#822ca7]/15 blur-[120px] animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[35%] h-[35%] rounded-full bg-[#a855f7]/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+            </div>
+            <div
+                className="absolute inset-0 z-0 opacity-[0.08]"
+                style={{
+                    backgroundImage: 'linear-gradient(#822ca7 1px, transparent 1px), linear-gradient(90deg, #822ca7 1px, transparent 1px)',
+                    backgroundSize: '40px 40px',
+                    maskImage: 'radial-gradient(circle at 50% 30%, black, transparent 70%)',
+                }}
+            />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-screen bg-gradient-to-b from-transparent via-[#822ca7]/40 to-transparent opacity-20 z-0" />
+
             {/* Header */}
-            <header className="border-b border-white/10 backdrop-blur-xl sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                            <span className="text-2xl">⚡</span>
+            <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-md bg-black/20">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <Link href="/" className="flex items-center gap-2 group transition-transform hover:scale-105">
+                        <div className="w-24 h-16 relative">
+                            <Image src={logo} alt="SplitChain" fill className="object-contain" />
                         </div>
-                        <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                            SplitChain
-                        </span>
                     </Link>
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href="/dashboard"
-                            className="px-4 py-2 text-gray-300 hover:text-white transition-colors font-medium text-sm"
-                        >
+                    <div className="flex items-center gap-3">
+                        <Link href="/dashboard" className="px-5 py-2 text-sm text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/5">
                             Dashboard
                         </Link>
-                        <div className="text-sm text-gray-400">
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl text-xs font-mono text-[#c084fc]">
                             {formatAddress(userAddress)}
                         </div>
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span className="text-xs text-green-400">Yellow Network</span>
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/15">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                            <span className="text-[10px] text-green-400 font-medium tracking-wide">Yellow Network</span>
                         </div>
                     </div>
                 </div>
             </header>
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-6 py-8">
+            <main className="relative z-10 max-w-7xl mx-auto px-6 pt-28 pb-20">
                 {/* Group Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
+                <div className="mb-8 animate-reveal">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
                         <div>
                             <h1 className="text-4xl font-bold text-white mb-2">{groupName}</h1>
                             <p className="text-gray-400">Session ID: {sessionId}</p>
@@ -387,46 +399,48 @@ export default function GroupDashboardPage() {
                             {/* View Participants Button */}
                             <button
                                 onClick={() => setShowParticipants(true)}
-                                className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-all duration-200"
+                                className="cursor-pointer px-5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm font-semibold text-white transition-all duration-300 hover:bg-white/[0.08] hover:border-white/[0.15] flex items-center gap-2"
                             >
-                                👥 Members ({currentGroup?.participants.length})
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Members ({currentGroup?.participants.length})
                             </button>
 
-                            {/* Add Member Button - Only for creator */}
                             {userAddress && currentGroup?.createdBy === userAddress && (
                                 <button
                                     onClick={() => setShowAddMember(true)}
-                                    className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-all duration-200"
+                                    className="cursor-pointer px-5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm font-semibold text-white transition-all duration-300 hover:bg-white/[0.08] hover:border-white/[0.15] flex items-center gap-2"
                                 >
-                                    + Add Member
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 5v14m-7-7h14" /></svg>
+                                    Add Member
                                 </button>
                             )}
                             <button
                                 onClick={() => setShowAddExpense(true)}
-                                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-indigo-500/50"
+                                className="cursor-pointer px-5 py-2.5 rounded-xl bg-gradient-to-br from-[#822ca7] to-[#a855f7] text-sm font-bold text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(130,44,167,0.4)] flex items-center gap-2"
                             >
-                                + Add Expense
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 5v14m-7-7h14" /></svg>
+                                Add Expense
                             </button>
                         </div>
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                            <div className="text-gray-400 text-sm mb-1">Total Expenses</div>
-                            <div className="text-3xl font-bold text-white">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-reveal-delayed">
+                        <div className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Total Expenses</div>
+                            <div className="text-2xl font-black text-white">
                                 {formatCurrency(expenses.reduce((sum, e) => sum + e.amount, 0))}
                             </div>
                         </div>
-                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                            <div className="text-gray-400 text-sm mb-1">Participants</div>
-                            <div className="text-3xl font-bold text-white">
+                        <div className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Participants</div>
+                            <div className="text-2xl font-black text-white">
                                 {currentGroup?.participants.length || 1}
                             </div>
                         </div>
-                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                            <div className="text-gray-400 text-sm mb-1">Your Balance</div>
-                            <div className={`text-3xl font-bold ${(balances.find(b => b.address === userAddress)?.netAmount || 0) >= 0
+                        <div className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Your Balance</div>
+                            <div className={`text-2xl font-black ${(balances.find(b => b.address === userAddress)?.netAmount || 0) >= 0
                                 ? 'text-green-400'
                                 : 'text-red-400'
                                 }`}>
@@ -438,32 +452,34 @@ export default function GroupDashboardPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Expenses List */}
-                    <div>
-                        <h2 className="text-2xl font-bold text-white mb-4">Expenses</h2>
+                    <div className="animate-reveal-delayed">
+                        <h2 className="text-xl font-black text-white mb-4 tracking-tight">Expenses</h2>
                         <div className="space-y-3">
                             {(!currentGroup?.expenses || currentGroup.expenses.length === 0) ? (
-                                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 text-center">
-                                    <span className="text-4xl mb-2 block">📝</span>
-                                    <p className="text-gray-400">No expenses yet</p>
-                                    <p className="text-sm text-gray-500 mt-1">Click "Add Expense" to get started</p>
+                                <div className="p-10 rounded-[2rem] border border-white/5 border-dashed bg-white/[0.02] text-center">
+                                    <div className="w-14 h-14 rounded-full bg-[#822ca7]/10 flex items-center justify-center mx-auto mb-4">
+                                        <span className="text-2xl opacity-60">📝</span>
+                                    </div>
+                                    <p className="text-gray-400 text-sm font-semibold">No expenses yet</p>
+                                    <p className="text-xs text-gray-600 mt-1">Click &quot;Add Expense&quot; to get started</p>
                                 </div>
                             ) : (
-                                currentGroup.expenses.map((expense) => (
+                                currentGroup.expenses.map((expense, idx) => (
                                     <div
                                         key={expense.id}
-                                        className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all"
+                                        className="group p-4 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.06] hover:border-[#822ca7]/20 transition-all duration-300"
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <div className="font-semibold text-white">{expense.description}</div>
-                                            <div className="text-lg font-bold text-indigo-400">
+                                            <div className="font-semibold text-white text-sm">{expense.description}</div>
+                                            <div className="text-base font-black text-[#c084fc]">
                                                 {formatCurrency(expense.amount)}
                                             </div>
                                         </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <div className="text-gray-400">
-                                                Paid by {formatAddress(expense.paidBy)}
-                                            </div>
+                                        <div className="flex items-center justify-between text-xs">
                                             <div className="text-gray-500">
+                                                Paid by <span className="text-gray-400 font-mono">{formatAddress(expense.paidBy)}</span>
+                                            </div>
+                                            <div className="text-gray-600">
                                                 {formatDate(expense.timestamp)}
                                             </div>
                                         </div>
@@ -474,29 +490,30 @@ export default function GroupDashboardPage() {
                     </div>
 
                     {/* Balances & Settlement */}
-                    <div>
-                        <h2 className="text-2xl font-bold text-white mb-4">Balances</h2>
+                    <div className="animate-reveal-more-delayed">
+                        <h2 className="text-xl font-black text-white mb-4 tracking-tight">Balances</h2>
                         <div className="space-y-3 mb-6">
                             {balances.length === 0 ? (
-                                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 text-center">
-                                    <span className="text-4xl mb-2 block">💰</span>
-                                    <p className="text-gray-400">No balances to show</p>
+                                <div className="p-10 rounded-[2rem] border border-white/5 border-dashed bg-white/[0.02] text-center">
+                                    <div className="w-14 h-14 rounded-full bg-[#822ca7]/10 flex items-center justify-center mx-auto mb-4">
+                                        <span className="text-2xl opacity-60">💰</span>
+                                    </div>
+                                    <p className="text-gray-400 text-sm font-semibold">No balances to show</p>
                                 </div>
                             ) : (
                                 balances.map((balance) => (
                                     <div
                                         key={balance.address}
-                                        className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
+                                        className="p-4 rounded-xl border border-white/5 bg-white/[0.03]"
                                     >
                                         <div className="flex items-center justify-between">
-                                            <div className="text-white">
+                                            <div className="text-sm text-white font-medium">
                                                 {balance.ensName || formatAddress(balance.address)}
                                                 {balance.address === userAddress && (
-                                                    <span className="ml-2 text-xs text-indigo-400">(You)</span>
+                                                    <span className="ml-2 text-[10px] text-[#c084fc] font-bold uppercase tracking-wide">You</span>
                                                 )}
                                             </div>
-                                            <div className={`font-bold ${balance.netAmount >= 0 ? 'text-green-400' : 'text-red-400'
-                                                }`}>
+                                            <div className={`font-black text-sm ${balance.netAmount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                                                 {balance.netAmount >= 0 ? '+' : ''}
                                                 {formatCurrency(balance.netAmount)}
                                             </div>
@@ -509,20 +526,20 @@ export default function GroupDashboardPage() {
                         {/* Simplified Settlements */}
                         {simplifiedDebts.length > 0 && (
                             <div className="mb-6">
-                                <h3 className="text-xl font-bold text-white mb-3">Suggested Settlements</h3>
+                                <h3 className="text-lg font-black text-white mb-3 tracking-tight">Suggested Settlements</h3>
                                 <div className="space-y-3">
                                     {simplifiedDebts.map((debt, idx) => (
                                         <div
                                             key={idx}
-                                            className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4"
+                                            className="p-4 rounded-xl border border-[#822ca7]/15 bg-[#822ca7]/[0.06]"
                                         >
                                             <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <span className="text-white font-medium">{formatAddress(debt.from)}</span>
-                                                    <span className="text-gray-400">→</span>
-                                                    <span className="text-white font-medium">{formatAddress(debt.to)}</span>
+                                                <div className="flex items-center gap-2 text-xs">
+                                                    <span className="text-white font-mono font-medium">{formatAddress(debt.from)}</span>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#822ca7" strokeWidth="2"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>
+                                                    <span className="text-white font-mono font-medium">{formatAddress(debt.to)}</span>
                                                 </div>
-                                                <span className="text-purple-400 font-bold">
+                                                <span className="text-[#c084fc] font-black text-sm">
                                                     {formatCurrency(debt.amount)}
                                                 </span>
                                             </div>
@@ -537,9 +554,10 @@ export default function GroupDashboardPage() {
                                                         });
                                                         setShowSettlement(true);
                                                     }}
-                                                    className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-medium transition-all duration-200 text-sm"
+                                                    className="w-full cursor-pointer px-4 py-2.5 rounded-xl bg-gradient-to-br from-[#822ca7] to-[#a855f7] text-white font-bold text-xs transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(130,44,167,0.4)] flex items-center justify-center gap-2"
                                                 >
-                                                    💳 Settle with LI.FI
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                                    Settle with LI.FI
                                                 </button>
                                             )}
                                         </div>
@@ -621,51 +639,43 @@ export default function GroupDashboardPage() {
                 </div>
             </main>
 
-
-
             {/* Participants Modal */}
             {showParticipants && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#0a0518] border border-white/[0.08] rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto animate-reveal">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-2xl font-bold text-white">Group Members</h3>
+                            <h3 className="text-xl font-black text-white tracking-tight">Group Members</h3>
                             <button
                                 onClick={() => setShowParticipants(false)}
-                                className="text-gray-400 hover:text-white transition-colors"
+                                className="cursor-pointer p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                             >
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {currentGroup?.participants.map((participant) => (
                                 <div
                                     key={participant.address}
-                                    className="p-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between group hover:bg-white/10 transition-all"
+                                    className="group p-4 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.06] transition-all flex items-center justify-between"
                                 >
                                     <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#822ca7] to-[#a855f7] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                             {participant.ensName ? participant.ensName[0].toUpperCase() : participant.address.slice(2, 4)}
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-medium text-white truncate">
+                                                <span className="font-semibold text-white text-sm truncate">
                                                     {participant.ensName || formatAddress(participant.address)}
                                                 </span>
                                                 {participant.address === userAddress && (
-                                                    <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 text-xs rounded-full border border-indigo-500/30">
-                                                        You
-                                                    </span>
+                                                    <span className="px-1.5 py-0.5 bg-[#822ca7]/20 text-[#c084fc] text-[10px] rounded-full font-bold">You</span>
                                                 )}
                                                 {participant.address === currentGroup.createdBy && (
-                                                    <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-300 text-xs rounded-full border border-yellow-500/30">
-                                                        Admin
-                                                    </span>
+                                                    <span className="px-1.5 py-0.5 bg-amber-500/15 text-amber-400 text-[10px] rounded-full font-bold">Admin</span>
                                                 )}
                                             </div>
-                                            <div className="text-sm text-gray-500 truncate font-mono">
+                                            <div className="text-[11px] text-gray-600 truncate font-mono">
                                                 {participant.address}
                                             </div>
                                         </div>
@@ -673,29 +683,24 @@ export default function GroupDashboardPage() {
 
                                     <button
                                         onClick={() => handleCopyAddress(participant.address)}
-                                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        className="cursor-pointer p-2 text-gray-600 hover:text-white hover:bg-white/5 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                                         title="Copy Address"
                                     >
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                        </svg>
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                                     </button>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Add Member Button inside Modal (Admin Only) */}
                         {userAddress && currentGroup?.createdBy === userAddress && (
                             <button
                                 onClick={() => {
                                     setShowParticipants(false);
                                     setShowAddMember(true);
                                 }}
-                                className="w-full mt-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                                className="cursor-pointer w-full mt-5 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm font-bold transition-all hover:bg-white/[0.08] flex items-center justify-center gap-2"
                             >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 5v14m-7-7h14" /></svg>
                                 Add New Member
                             </button>
                         )}
@@ -705,12 +710,12 @@ export default function GroupDashboardPage() {
 
             {/* Add Member Modal */}
             {showAddMember && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-md w-full">
-                        <h3 className="text-2xl font-bold text-white mb-4">Add Member</h3>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#0a0518] border border-white/[0.08] rounded-3xl p-6 max-w-md w-full animate-reveal">
+                        <h3 className="text-xl font-black text-white mb-5 tracking-tight">Add Member</h3>
                         <form onSubmit={handleAddMember} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                <label className="block text-sm font-semibold text-gray-300 mb-2">
                                     Wallet Address or ENS Name
                                 </label>
                                 <input
@@ -719,12 +724,12 @@ export default function GroupDashboardPage() {
                                     onChange={(e) => setNewMemberInput(e.target.value)}
                                     placeholder="0x... or name.eth"
                                     required
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-5 py-3.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-[#822ca7]/50 focus:ring-1 focus:ring-[#822ca7]/30 transition-all duration-300 text-sm"
                                 />
                             </div>
 
                             {addMemberError && (
-                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400">
+                                <div className="p-3 bg-red-500/10 border border-red-500/15 rounded-xl text-xs text-red-400">
                                     {addMemberError}
                                 </div>
                             )}
@@ -737,14 +742,14 @@ export default function GroupDashboardPage() {
                                         setNewMemberInput('');
                                         setAddMemberError(null);
                                     }}
-                                    className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-all"
+                                    className="cursor-pointer flex-1 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm font-bold transition-all hover:bg-white/[0.08]"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isAddingMember}
-                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-xl font-semibold transition-all"
+                                    className="cursor-pointer flex-1 px-4 py-3 rounded-xl bg-gradient-to-br from-[#822ca7] to-[#a855f7] disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white text-sm font-bold transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(130,44,167,0.4)]"
                                 >
                                     {isAddingMember ? 'Adding...' : 'Add Member'}
                                 </button>
@@ -756,27 +761,23 @@ export default function GroupDashboardPage() {
 
             {/* Add Expense Modal */}
             {showAddExpense && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-md w-full">
-                        <h3 className="text-2xl font-bold text-white mb-4">Add Expense</h3>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#0a0518] border border-white/[0.08] rounded-3xl p-6 max-w-md w-full animate-reveal">
+                        <h3 className="text-xl font-black text-white mb-5 tracking-tight">Add Expense</h3>
                         <form onSubmit={handleAddExpense} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Description
-                                </label>
+                                <label className="block text-sm font-semibold text-gray-300 mb-2">Description</label>
                                 <input
                                     type="text"
                                     value={newExpense.description}
                                     onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
                                     placeholder="e.g., Dinner at restaurant"
                                     required
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-5 py-3.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-[#822ca7]/50 focus:ring-1 focus:ring-[#822ca7]/30 transition-all duration-300 text-sm"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Amount (USDC)
-                                </label>
+                                <label className="block text-sm font-semibold text-gray-300 mb-2">Amount (USDC)</label>
                                 <input
                                     type="number"
                                     value={newExpense.amount}
@@ -785,15 +786,17 @@ export default function GroupDashboardPage() {
                                     step="0.01"
                                     min="0"
                                     required
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-5 py-3.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-[#822ca7]/50 focus:ring-1 focus:ring-[#822ca7]/30 transition-all duration-300 text-sm"
                                 />
                             </div>
-                            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 text-sm text-gray-300">
-                                <div className="flex items-start gap-2">
-                                    <span>⚡</span>
+                            <div className="p-4 rounded-xl border border-[#822ca7]/15 bg-[#822ca7]/[0.06]">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-[#822ca7]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <span className="text-sm">⚡</span>
+                                    </div>
                                     <div>
-                                        <div className="font-semibold text-white mb-1">Instant Sync via Yellow Network</div>
-                                        <div className="text-xs text-gray-400">
+                                        <div className="font-bold text-white text-xs mb-0.5">Instant Sync via Yellow Network</div>
+                                        <div className="text-[11px] text-gray-500">
                                             This expense will be synced instantly to all participants with zero gas fees
                                         </div>
                                     </div>
@@ -803,13 +806,13 @@ export default function GroupDashboardPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowAddExpense(false)}
-                                    className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-all"
+                                    className="cursor-pointer flex-1 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm font-bold transition-all hover:bg-white/[0.08]"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all"
+                                    className="cursor-pointer flex-1 px-4 py-3 rounded-xl bg-gradient-to-br from-[#822ca7] to-[#a855f7] text-white text-sm font-bold transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(130,44,167,0.4)]"
                                 >
                                     Add Expense
                                 </button>
@@ -863,7 +866,6 @@ export default function GroupDashboardPage() {
                                 }
                             } catch (yellowError) {
                                 console.warn('⚠️ Could not send to Yellow Network:', yellowError);
-                                // Continue anyway - Firebase save is more important
                             }
 
                             console.log('✅ Settlement recorded successfully');
@@ -890,18 +892,27 @@ export default function GroupDashboardPage() {
             {/* Settlement Success Overlay */}
             {settlementSuccess && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-green-500/30 rounded-2xl p-8 max-w-md w-full text-center animate-scale-in">
+                    <div className="bg-[#0a0518] border border-white/[0.08] rounded-3xl p-6 max-w-md w-full animate-reveal">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-black text-white tracking-tight">Settlement Successful!</h3>
+                            <button
+                                onClick={() => setSettlementSuccess(null)}
+                                className="cursor-pointer p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+
                         {/* Animated Checkmark */}
-                        <div className="w-20 h-20 mx-auto mb-6 bg-green-500/10 rounded-full flex items-center justify-center border-2 border-green-500/40">
-                            <svg className="w-10 h-10 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <div className="w-16 h-16 mx-auto mb-5 bg-green-500/10 rounded-full flex items-center justify-center border-2 border-green-500/40">
+                            <svg className="w-8 h-8 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                 <path className="animate-checkmark" d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
 
-                        <h3 className="text-2xl font-bold text-white mb-2">Settlement Successful!</h3>
-                        <p className="text-gray-400 mb-6">Your payment has been sent on-chain.</p>
+                        <p className="text-gray-400 text-sm text-center mb-5">Your payment has been sent on-chain.</p>
 
-                        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-left space-y-3">
+                        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 mb-6 space-y-3">
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-400">Amount</span>
                                 <span className="text-white font-bold">{formatCurrency(settlementSuccess.amount)}</span>
@@ -923,7 +934,7 @@ export default function GroupDashboardPage() {
                                             href={url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-indigo-400 hover:text-indigo-300 font-mono transition-colors"
+                                            className="text-[#c084fc] hover:text-[#a855f7] font-mono transition-colors"
                                         >
                                             {settlementSuccess.txHash.substring(0, 14)}...
                                         </a>
@@ -936,7 +947,7 @@ export default function GroupDashboardPage() {
 
                         <button
                             onClick={() => setSettlementSuccess(null)}
-                            className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-semibold transition-all duration-200"
+                            className="cursor-pointer w-full px-4 py-3 rounded-xl bg-gradient-to-br from-[#822ca7] to-[#a855f7] text-white text-sm font-bold transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(130,44,167,0.4)]"
                         >
                             Done
                         </button>
@@ -946,18 +957,28 @@ export default function GroupDashboardPage() {
 
             {/* Toast Notification */}
             {toast && (
-                <div className="fixed bottom-6 right-6 z-50 animate-fade-in-up">
-                    <div className={`px-6 py-4 rounded-xl shadow-2xl border flex items-center gap-3 ${toast.type === 'success'
-                        ? 'bg-slate-900/90 border-green-500/50 text-green-400'
-                        : 'bg-slate-900/90 border-red-500/50 text-red-400'
+                <div className="fixed bottom-6 right-6 z-50 animate-reveal">
+                    <div className={`px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-xl flex items-center gap-3 ${toast.type === 'success'
+                        ? 'bg-[#0a0518]/90 border-green-500/20 text-green-400'
+                        : 'bg-[#0a0518]/90 border-red-500/20 text-red-400'
                         }`}>
-                        <span className="text-xl">
+                        <span className="text-lg">
                             {toast.type === 'success' ? '✅' : '❌'}
                         </span>
-                        <span className="font-medium text-white">{toast.message}</span>
+                        <span className="font-semibold text-white text-sm">{toast.message}</span>
                     </div>
                 </div>
             )}
+
+            <style jsx global>{`
+                @keyframes reveal {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+                .animate-reveal-delayed { opacity: 0; animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; }
+                .animate-reveal-more-delayed { opacity: 0; animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s forwards; }
+            `}</style>
         </div>
     );
 }

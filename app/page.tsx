@@ -1,205 +1,184 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePrivy } from "@privy-io/react-auth";
+import logo from "@/app/assets/logo-splitchain.png";
+import Features from "@/components/ui/Features";
 
 export default function Home() {
   const { ready, authenticated, login, logout, user } = usePrivy();
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Animated background gradients */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
-        <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+    <div className="relative font-comfortaa min-h-screen overflow-hidden bg-[#030014] text-white">
+      {/* --- MODERN BACKGROUND ARCHITECTURE --- */}
+      {/* Animated Mesh Gradient */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#822ca7]/20 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#a855f7]/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 border-b border-white/10 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">⚡</span>
+      {/* Interactive Grid with Fade Mask */}
+      <div 
+        className="absolute inset-0 z-0 opacity-[0.2]"
+        style={{
+          backgroundImage: `linear-gradient(#822ca7 1px, transparent 1px), linear-gradient(90deg, #822ca7 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
+          maskImage: 'radial-gradient(circle at 50% 50%, black, transparent 80%)'
+        }}
+      />
+
+      {/* Moving Light Beam Effect */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-screen bg-gradient-to-b from-transparent via-[#822ca7]/50 to-transparent opacity-20" />
+
+      {/* --- HEADER --- */}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-md bg-black/20">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 group transition-transform hover:scale-105">
+            <div className="w-24 h-16 relative">
+              <Image src={logo} alt="SplitChain" fill className="object-contain" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-              SplitChain
-            </span>
-          </div>
+          </Link>
 
-          {ready && !authenticated && (
-            <button
-              onClick={login}
-              className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-medium transition-all duration-200 shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/70"
-            >
-              Connect Wallet
-            </button>
-          )}
-
-          {ready && authenticated && user && (
-            <div className="flex items-center gap-4">
+          <nav className="hidden md:flex items-center gap-1 bg-white/5 border border-white/10 p-1 rounded-full backdrop-blur-2xl">
+            {[
+              { label: 'Features', href: '#features' },
+              { label: 'Create', href: '/create' },
+              { label: 'Join', href: '/join' },
+              { label: 'Dashboard', href: '/dashboard' },
+            ].map((item) => (
               <Link
-                href="/dashboard"
-                className="px-4 py-2 text-gray-300 hover:text-white transition-colors font-medium"
+                key={item.label}
+                href={item.href}
+                className="px-6 py-2 text-sm font-medium text-gray-400 hover:text-white transition-all rounded-full hover:bg-white/10"
               >
-                Dashboard
+                {item.label}
               </Link>
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-300">
-                  {(user as any).email?.address ||
-                    (user as any).wallet?.address?.slice(0, 6) + '...' + (user as any).wallet?.address?.slice(-4) ||
-                    'Connected'}
-                </span>
-              </div>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-4">
+            {ready && !authenticated && (
               <button
-                onClick={logout}
-                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl font-medium transition-all duration-200"
+                onClick={login}
+                className="px-8 py-2.5 cursor-pointer rounded-full bg-white text-black font-bold text-sm hover:bg-[#a855f7] hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[#822ca7]/40"
               >
-                Disconnect
+                Connect Wallet
               </button>
-            </div>
-          )}
+            )}
+
+            {ready && authenticated && user && (
+              <div className="flex items-center gap-4">
+                <div className="hidden sm:flex flex-col items-end">
+                  <span className="text-[10px] uppercase tracking-widest text-gray-500">Connected</span>
+                  <span className="text-sm font-mono text-[#a855f7]">
+                    {(user as any).wallet?.address?.slice(0, 6)}...{(user as any).wallet?.address?.slice(-4)}
+                  </span>
+                </div>
+                <button
+                  onClick={logout}
+                  className="p-2.5 cursor-pointer rounded-full border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-colors"
+                  title="Disconnect"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-32">
-        <div className="text-center max-w-4xl mx-auto">
+      {/* --- HERO SECTION --- */}
+      <main className="relative z-10 pt-40 pb-20 px-6">
+        <div className="max-w-7xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#822ca7]/30 bg-[#822ca7]/10 text-[#c084fc] text-xs font-medium mb-8 animate-reveal">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
             </span>
-            <span className="text-sm text-gray-300">Built for HackMoney 2026</span>
+            Built for HackMoney 2026
           </div>
 
-          {/* Main Heading */}
-          <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-white via-indigo-200 to-purple-200 bg-clip-text text-transparent">
-              Split Expenses
-            </span>
+          <h1 className="text-6xl md:text-7xl font-black tracking-tighter mb-8  animate-reveal-delayed">
+            Split <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">Expenses</span>
             <br />
-            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Across Any Chain
+            <span className="italic bg-gradient-to-r from-[#822ca7] via-[#c084fc] to-[#822ca7] bg-clip-text text-transparent animate-gradient-x">
+              Any Chain.
             </span>
           </h1>
 
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Instant off-chain expense tracking with <span className="text-indigo-400 font-semibold">Yellow Network</span>,
-            cross-chain settlements via <span className="text-purple-400 font-semibold">LI.FI</span>,
-            and human-readable names with <span className="text-pink-400 font-semibold">ENS</span>
+          <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto mb-12 leading-relaxed animate-reveal-more-delayed">
+            Experience the future of group finances. Instant off-chain tracking on 
+            <span className="text-white font-semibold"> Yellow Network</span> with 
+            <span className="text-white font-semibold"> LI.FI </span> 
+            cross-chain settlement.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <div className="flex flex-wrap justify-center gap-4 mb-32 animate-reveal-more-delayed">
             <Link
               href="/create"
-              className="group px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl font-semibold text-lg transition-all duration-200 shadow-2xl shadow-indigo-500/50 hover:shadow-indigo-500/70 hover:scale-105"
+              className="px-10 py-4 rounded-2xl bg-gradient-to-br from-[#822ca7] to-[#a855f7] font-bold text-white transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(130,44,167,0.4)] flex items-center gap-2"
             >
               Create Group
-              <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
             </Link>
             <Link
               href="/join"
-              className="px-8 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 hover:border-white/20 text-white rounded-2xl font-semibold text-lg transition-all duration-200"
+              className="px-10 py-4 rounded-2xl bg-white/5 border border-white/10 font-bold text-white backdrop-blur-md transition-all hover:bg-white/10 hover:border-white/20"
             >
               Join Group
             </Link>
           </div>
 
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mt-20">
-            {/* Feature 1 */}
-            <div className="group p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105">
-              <div className="w-14 h-14 bg-gradient-to-br from-indigo-500/20 to-indigo-600/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <span className="text-3xl">⚡</span>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Instant Sync</h3>
-              <p className="text-gray-400">
-                Off-chain expense tracking with Yellow Network for real-time updates across all participants
-              </p>
-            </div>
+          {/* BENTO GRID FEATURES */}
+          <Features/>
 
-            {/* Feature 2 */}
-            <div className="group p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105">
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <span className="text-3xl">🌉</span>
+          {/* STATS BAR */}
+          <div className="mt-20 py-12 px-8 rounded-3xl bg-white/[0.02] border border-white/5 flex flex-wrap justify-around gap-8">
+            {[
+              { label: 'Network Cost', value: '~$0.00' },
+              { label: 'Supported Chains', value: '15+' },
+              { label: 'Sync Speed', value: 'Real-time' },
+            ].map((s, i) => (
+              <div key={i} className="text-center">
+                <div className="text-sm uppercase tracking-[0.2em] text-gray-500 mb-2">{s.label}</div>
+                <div className="text-3xl font-black text-white">{s.value}</div>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Cross-Chain</h3>
-              <p className="text-gray-400">
-                Settle from any chain using LI.FI's routing - ETH, Polygon, Arbitrum, and more
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="group p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105">
-              <div className="w-14 h-14 bg-gradient-to-br from-pink-500/20 to-pink-600/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <span className="text-3xl">👤</span>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">ENS Names</h3>
-              <p className="text-gray-400">
-                Human-readable identities - split with vinit.eth instead of 0x1234...
-              </p>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 mt-20 p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
-            <div>
-              <div className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-2">
-                99%
-              </div>
-              <div className="text-gray-400 text-sm">Gas Savings</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
-                6+
-              </div>
-              <div className="text-gray-400 text-sm">Chains Supported</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold bg-gradient-to-r from-pink-400 to-indigo-400 bg-clip-text text-transparent mb-2">
-                &lt;1s
-              </div>
-              <div className="text-gray-400 text-sm">Settlement Time</div>
-            </div>
+            ))}
           </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 backdrop-blur-xl mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-8 text-center text-gray-400 text-sm">
-          <p>Built with Yellow Network, LI.FI, and ENS for HackMoney 2026</p>
+      <footer className="border-t border-white/5 py-12 relative z-10 bg-black/50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-gray-500 text-sm">© 2026 SplitChain. Built for HackMoney.</p>
+          <div className="flex gap-8 text-gray-500 text-sm">
+            <span className="hover:text-white transition-colors cursor-pointer">Documentation</span>
+            <span className="hover:text-white transition-colors cursor-pointer">Security</span>
+            <span className="hover:text-white transition-colors cursor-pointer">GitHub</span>
+          </div>
         </div>
       </footer>
 
-      <style jsx>{`
-        @keyframes blob {
-          0%, 100% {
-            transform: translate(0, 0) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
+      <style jsx global>{`
+        @keyframes reveal {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .animate-blob {
-          animation: blob 7s infinite;
+        .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .animate-reveal-delayed { opacity: 0; animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; }
+        .animate-reveal-more-delayed { opacity: 0; animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s forwards; }
+        
+        .animate-gradient-x {
+          background-size: 200% 200%;
+          animation: gradient-x 15s ease infinite;
         }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
+        @keyframes gradient-x {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
       `}</style>
     </div>
   );
 }
-
